@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang='zh-CN'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width,initial-scale=1.0'>
+<title>SUSTech Time Manager</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,PingFang SC,Microsoft YaHei,sans-serif;color:#1C1917;background:#FFFCF5;line-height:1.6}
+:root{--c1:#D4A017;--c2:#B8890F;--nb:#1C1917;--nt:#A8A29E;--na:#FFFBEB;--nw:220px}
+.sidebar{width:var(--nw);background:var(--nb);position:fixed;top:0;left:0;height:100vh;display:flex;flex-direction:column}
+.sb{display:flex;align-items:center;gap:10px;padding:20px 18px 28px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.bi{width:36px;height:36px;background:var(--c1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--nb)}
+.bt{display:flex;flex-direction:column}.bt0{font-size:16px;font-weight:700;color:var(--na)}.bt1{font-size:11px;color:var(--nt)}
+.sn{flex:1;padding:16px 10px}.ni{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:6px;color:var(--nt);font-size:14px;text-decoration:none}
+.ni:hover{background:#292524;color:var(--na)}.ni.on{background:rgba(212,160,23,0.15);color:var(--na)}.ni.on .nv{color:var(--c1)}
+.nv{width:20px;font-size:16px}.sf{padding:16px 18px;border-top:1px solid rgba(255,255,255,0.06)}.v{font-size:11px;color:var(--nt)}
+.ma{margin-left:var(--nw)}.tb{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;background:#fff;border-bottom:1px solid #E7E5E4;position:sticky;top:0}
+.pt{font-size:18px;font-weight:600}.ub{font-size:12px;font-weight:600;color:var(--c2);background:#FDF3D0;padding:4px 12px;border-radius:20px;cursor:pointer}
+.ct{flex:1;padding:28px 32px}
+.wc{background:linear-gradient(135deg,var(--c2),var(--c1));color:var(--na);border-radius:12px;padding:36px 40px;margin-bottom:28px}
+.wc h1{font-size:24px;font-weight:700;margin-bottom:6px}.wc p{font-size:14px;opacity:.85}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.sc{background:#fff;border-radius:8px;padding:20px;text-align:center;border:1px solid #F5F0EB}
+.sv{font-size:28px;font-weight:700;color:var(--c1);margin-bottom:4px}.sl{font-size:13px;color:#78716C}
+.pb{background:#fff;border:2px dashed #E7E5E4;border-radius:8px;padding:64px;text-align:center;color:#A8A29E;font-size:14px}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999}
+.mc{background:#fff;border-radius:12px;padding:32px;width:380px;max-width:90%}.mc h2{margin-bottom:20px}
+.mc input{width:100%;padding:10px 14px;border:1px solid #E7E5E4;border-radius:6px;font-size:14px;margin-bottom:12px;outline:none}
+.mc button{width:100%;padding:10px;background:var(--c1);color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px}
+.sch{overflow-x:auto}.sch table{width:100%;border-collapse:collapse;font-size:13px;min-width:800px}
+.sch th,.sch td{border:1px solid #E7E5E4;padding:6px 8px;text-align:center}
+.sch th{background:#FFFAEB;font-weight:600;color:var(--c2)}.sch .pl{background:#FFFAEB;font-weight:600;color:var(--c2);white-space:nowrap;width:70px}
+.sch input{width:100%;border:none;outline:none;background:transparent;text-align:center;font-size:13px;padding:4px 0}
+.sch .cn{font-weight:500;color:#1C1917}.sch .loc{color:#A8A29E;font-size:11px}
+.sb-btn{background:var(--c1);color:#fff;border:none;border-radius:6px;padding:8px 20px;font-size:14px;cursor:pointer;margin-bottom:16px}
+</style></head><body><div id='app'></div>
+<script src='https://cdn.jsdelivr.net/npm/vue@3.4.38/dist/vue.global.prod.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/vue-router@4.4.5/dist/vue-router.global.prod.js'></script>
+<script>
+var S='https://sswufluacnpuqvbdmuiz.supabase.co';
+var K='sb_publishable_VWO6f1uFxvuI7aFrA2XE6w_b3KS4YrQ';
+var {createApp,ref,computed,onMounted}=Vue;
+var {createRouter,createWebHashHistory}=VueRouter;
+var user=ref(null),loading=ref(true),sa=ref(false),am=ref('login'),aerr=ref('');
+var nav=[{path:'/',name:'H',label:'\u9996\u9875',icon:'\u2603'},{path:'/schedule',name:'S',label:'\u65E5\u7A0B\u5B89\u6392',icon:'\u2606'},{path:'/tasks',name:'T',label:'\u4EFB\u52A1\u7BA1\u7406',icon:'\u2630'},{path:'/settings',name:'St',label:'\u7CFB\u7EDF\u8BBE\u7F6E',icon:'\u2699'}];
+var pt={H:'\u9996\u9875',S:'\u65E5\u7A0B\u5B89\u6392',T:'\u4EFB\u52A1\u7BA1\u7406',St:'\u7CFB\u7EDF\u8BBE\u7F6E'};
+var days=[{key:1,label:'\u661F\u671F\u4E00'},{key:2,label:'\u661F\u671F\u4E8C'},{key:3,label:'\u661F\u671F\u4E09'},{key:4,label:'\u661F\u671F\u56DB'},{key:5,label:'\u661F\u671F\u4E94'},{key:6,label:'\u661F\u671F\u516D'},{key:0,label:'\u661F\u671F\u65E5'}];
+var periods=[{id:1,label:'\u65E9\u516B',time:'08:00-09:35'},{id:2,label:'\u65E9\u5341',time:'10:00-11:35'},{id:3,label:'\u5348\u4E8C',time:'14:00-15:35'},{id:4,label:'\u5348\u56DB',time:'16:00-17:35'},{id:5,label:'\u665A\u516D',time:'19:00-20:35'},{id:6,label:'\u665A\u4E5D',time:'21:00-22:35'}];
+var tc=ref(0),dc=ref(0);
+// Auth helpers
+function st(t){localStorage.setItem('sb',t)}
+function gt(){return localStorage.getItem('sb')}
+function rt(){localStorage.removeItem('sb')}
+function sf(p,o){
+  var h={'Content-Type':'application/json',apikey:K};
+  if(o&&o.a)h.Authorization='Bearer '+K;
+  var t=gt();if(t)h.Authorization='Bearer '+t;
+  return fetch(S+p,{method:(o&&o.m)||'GET',headers:h,body:o&&o.b?JSON.stringify(o.b):null})
+}
+async function lg(e,p){
+  if(!e||!p){aerr.value='\u8BF7\u8F93\u5165\u90AE\u7BB1\u548C\u5BC6\u7801';return}
+  aerr.value='\u767B\u5F55\u4E2D...';try{
+    var r=await sf('/auth/v1/token?grant_type=password',{m:'POST',b:{email:e,password:p},a:1});
+    if(!r.ok){var b=await r.text();aerr.value='\u767B\u5F55\u5931\u8D25 (HTTP '+r.status+'): '+b;return}
+    var d=await r.json();
+    if(d.access_token){st(d.access_token);user.value=d.user;sa.value=false;aerr.value='';return}
+    aerr.value=JSON.stringify(d)
+  }catch(er){aerr.value='\u7F51\u7EDC\u9519\u8BEF: '+(er.message||er)}
+}
+async function rg(e,p){
+  if(!e||!p){aerr.value='\u8BF7\u8F93\u5165\u90AE\u7BB1\u548C\u5BC6\u7801';return}
+  aerr.value='\u6CE8\u518C\u4E2D...';try{
+    var r=await sf('/auth/v1/signup',{m:'POST',b:{email:e,password:p},a:1});
+    if(!r.ok){var b=await r.text();aerr.value='\u6CE8\u518C\u5931\u8D25 (HTTP '+r.status+'): '+b;return}
+    var d=await r.json();
+    if(d.id||d.user){aerr.value='\u6CE8\u518C\u6210\u529F\uFF01\u8BF7\u67E5\u770B\u90AE\u7BB1\u9A8C\u8BC1';am.value='login';return}
+    aerr.value=JSON.stringify(d)
+  }catch(er){aerr.value='\u7F51\u7EDC\u9519\u8BEF: '+(er.message||er)}
+}
+async function ch(){
+  var t=gt();loading.value=true;
+  if(!t){user.value=null;loading.value=false;return}
+  try{var r=await sf('/auth/v1/user',{m:'GET',a:1});var d=await r.json();if(d&&d.id){user.value=d;loading.value=false;return}}catch(e){}
+  rt();user.value=null;loading.value=false
+}
+async function lo(){rt();user.value=null}
+async function sq(t,o){
+  var tk=gt()||K;var u=S+'/rest/v1/'+t;
+  if(o&&o.p){var s=[];for(var k in o.p)s.push(k+'='+encodeURIComponent(o.p[k]));u+='?'+s.join('&')}
+  var r=await fetch(u,{method:(o&&o.m)||'GET',headers:{apikey:K,Authorization:'Bearer '+tk}});
+  if(o&&o.c)return {n:parseInt(r.headers.get('content-range')?.split('/')[1]||'0')};
+  try{return await r.json()}catch(e){return []}
+}
+async function ld(){
+  if(!user.value)return;
+  var b=await sq('tasks',{c:1,p:{select:'id','user_id':'eq.'+user.value.id,'status':'neq.completed'}});if(b.n!=undefined)tc.value=b.n;
+  var c=await sq('tasks',{c:1,p:{select:'id','user_id':'eq.'+user.value.id,'status':'eq.completed'}});if(c.n!=undefined)dc.value=c.n
+}
+// Schedule data - shared between components
+var sd=ref({}),ss=ref(false),sm=ref('');
+var PERIOD_MINUTES = 95;
+var TOTAL_SLOTS = 42;
+function is(){var d={};for(var i=0;i<7;i++){var dk=days[i].key;d[dk]={};for(var j=0;j<6;j++)d[dk][periods[j].id]={name:'',location:''}}return d}
+sd.value=is();
+function countFilled(){
+  var s=sd.value,ct=0;
+  for(var di=0;di<7;di++){var dk=days[di].key;
+    for(var pi=0;pi<6;pi++){var pk=periods[pi].id;if(s[dk]&&s[dk][pk]&&s[dk][pk].name)ct++}
+  }
+  return ct
+}
+var courseCount=computed(function(){return countFilled()});
+var freeHours=computed(function(){return ((TOTAL_SLOTS-countFilled())*PERIOD_MINUTES/60).toFixed(1)});
+async function ls(){
+  if(!user.value)return;var data=await sq('courses',{p:{'user_id':'eq.'+user.value.id}});
+  var s=is();if(data&&data.length){for(var i=0;i<data.length;i++){var c=data[i];if(s[c.day_key]&&s[c.day_key][c.period]){s[c.day_key][c.period].name=c.name||'';s[c.day_key][c.period].location=c.location||''}}}
+  sd.value=s
+}
+async function sv(){
+  if(!user.value||ss.value)return;ss.value=true;sm.value='';
+  try{
+    var tk=gt()||K;var h={apikey:K,Authorization:'Bearer '+tk,'Content-Type':'application/json'};
+    await fetch(S+'/rest/v1/courses?user_id=eq.'+user.value.id,{method:'DELETE',headers:h});
+    var rows=[];var s=sd.value;
+    for(var di=0;di<7;di++){var dk=days[di].key;for(var pi=0;pi<6;pi++){var pk=periods[pi].id;var c=s[dk]&&s[dk][pk];if(c&&(c.name||c.location))rows.push({user_id:user.value.id,day_key:dk,period:pk,name:c.name,location:c.location})}}
+    if(rows.length){var r=await fetch(S+'/rest/v1/courses',{method:'POST',headers:h,body:JSON.stringify(rows)});if(!r.ok){sm.value='\u4FDD\u5B58\u5931\u8D25';ss.value=false;return}}
+    sm.value='\u4FDD\u5B58\u6210\u529F'
+  }catch(e){sm.value='\u4FDD\u5B58\u5931\u8D25: '+(e.message||e)}
+  ss.value=false;setTimeout(function(){sm.value=''},2000)
+}
+// Components
+var HP={template:'<div class="page"><div class="wc"><h1>\u6B22\u8FCE\u4F7F\u7528\u65F6\u95F4\u7BA1\u5BB6</h1><p>\u5357\u65B9\u79D1\u6280\u5927\u5B66\u667A\u80FD\u65E5\u7A0B\u7BA1\u7406\u5E73\u53F0</p></div><div class="sg"><div class="sc"><div class="sv">{{courseCount}}</div><div class="sl">\u672C\u5468\u8BFE\u7A0B</div></div><div class="sc"><div class="sv">{{tc}}</div><div class="sl">\u5F85\u529E\u4EFB\u52A1</div></div><div class="sc"><div class="sv">{{dc}}</div><div class="sl">\u5DF2\u5B8C\u6210</div></div><div class="sc"><div class="sv">{{freeHours}}</div><div class="sl">\u5269\u4F59\u7A7A\u95F2(\u5C0F\u65F6)</div></div></div></div>',setup(){onMounted(ld);return{courseCount,tc,dc,freeHours}}};
+var SP={template:'<div class="page"><div style="display:flex;margin-bottom:12px"><button class="sb-btn" @click="sv" :disabled="ss||!user">{{ss?"\u4FDD\u5B58\u4E2D...":"\u4FDD\u5B58\u8BFE\u7A0B\u8868"}}</button><span style="margin-left:12px;font-size:13px;color:#16A34A" v-if="sm">{{sm}}</span><span v-if="!user" style="margin-left:12px;font-size:13px;color:#A8A29E">\u8BF7\u5148\u767B\u5F55</span></div><div class="sg" style="margin-bottom:16px;grid-template-columns:repeat(3,1fr)"><div class="sc"><div class="sv">{{courseCount}}</div><div class="sl">已填课程</div></div><div class="sc"><div class="sv">{{42-courseCount}}</div><div class="sl">空闲时段</div></div><div class="sc"><div class="sv">{{freeHours}}</div><div class="sl">剩余空闲(小时)</div></div></div><div class="sch"><table><thead><tr><th style="width:70px">\u65F6\u95F4\u6BB5</th><th v-for="d in days" :key="d.key">{{d.label}}</th></tr></thead><tbody><tr v-for="p in periods" :key="p.id"><td class="pl">{{p.label}}<br><span style="font-weight:400;font-size:11px;color:#A8A29E">{{p.time}}</span></td><td v-for="d in days" :key="d.key"><input class="cn" v-model="sd[d.key][p.id].name" placeholder="\u8BFE\u7A0B\u540D" /><input class="loc" v-model="sd[d.key][p.id].location" placeholder="\u5730\u70B9" /></td></tr></tbody></table></div></div>',setup(){onMounted(function(){if(user.value)ls()});return{days,periods,sd,ss,sm,sv,user,courseCount,freeHours}}};
+var TP={template:'<div class="page"><div class="pb">\u4EFB\u52A1\u7BA1\u7406</div></div>'};
+var StP={template:'<div class="page"><div class="pb">\u8BBE\u7F6E\u9762\u677F</div></div>'};
+var AM={template:'<div class="modal" v-if="sa" @click.self="close"><div class="mc"><h2>{{isLogin?"\u767B\u5F55":"\u6CE8\u518C"}}</h2><div class="err" style="color:#DC2626;font-size:13px;text-align:center;margin-bottom:8px;word-break:break-all">{{aerr}}</div><input v-model="em" type="email" placeholder="\u90AE\u7BB1" /><input v-model="pw" type="password" placeholder="\u5BC6\u7801" /><button @click="sub">{{isLogin?"\u767B\u5F55":"\u6CE8\u518C"}}</button><div style="text-align:center;font-size:13px;color:#78716C;cursor:pointer" @click="sw">{{isLogin?"\u6CA1\u6709\u8D26\u53F7\uFF1F\u70B9\u51FB\u6CE8\u518C":"\u5DF2\u6709\u8D26\u53F7\uFF1F\u70B9\u51FB\u767B\u5F55"}}</div></div></div>',props:{sa:Boolean,aerr:String,am:String},emits:['close','login','reg','sw'],setup(p,{emit}){var em=ref(''),pw=ref('');var il=computed(function(){return p.am==='login'});return{em,pw,isLogin:il,close:function(){emit('close')},sub:function(){il.value?emit('login',em.value,pw.value):emit('reg',em.value,pw.value)},sw:function(){emit('sw')}}}};
+var ML={template:'<div class="layout"><aside class="sidebar"><div class="sb"><div class="bi">\u23F2</div><div class="bt"><span class="bt0">\u65F6\u95F4\u7BA1\u5BB6</span><span class="bt1">\u5357\u65B9\u79D1\u6280\u5927\u5B66</span></div></div><nav class="sn"><router-link v-for="item in nav" :key="item.path" :to="item.path" class="ni" :class="{on:$route.path===item.path}"><span class="nv" v-html="item.icon"></span><span class="nl">{{item.label}}</span></router-link></nav><div class="sf"><div class="v">v0.0.1</div></div></aside><div class="ma"><header class="tb"><div class="pt">{{title}}</div><div><span v-if="!user" class="ub" @click="sa=true">\u767B\u5F55</span><span v-else class="ub" @click="lo">{{uname}}</span></div></header><main class="ct"><div v-if="loading" style="padding:60px;text-align:center;color:#A8A29E">\u52A0\u8F7D\u4E2D...</div><router-view v-else /></main></div><auth-modal :sa="sa" :aerr="aerr" :am="am" @close="sa=false" @login="lg" @reg="rg" @sw="am=am===\'login\'?\'register\':\'login\';aerr=\'\'"></auth-modal></div>',setup(){ch();var r=VueRouter.useRoute();var t=computed(function(){return pt[r.name]||'\u9996\u9875'});var u=computed(function(){var u=user.value;return u?u.email?.split('@')[0]||u.id?.slice(0,8):'\u767B\u5F55'});return{nav,user,loading,sa,am,aerr,lg,rg,lo,title:t,uname:u}}};
+var rt=[{path:'/',component:ML,children:[{path:'',name:'H',component:HP},{path:'schedule',name:'S',component:SP},{path:'tasks',name:'T',component:TP},{path:'settings',name:'St',component:StP}]}];
+createApp({template:"<router-view></router-view>"}).component('auth-modal',AM).use(createRouter({history:createWebHashHistory(),routes:rt})).mount('#app');
+</script></body></html>
